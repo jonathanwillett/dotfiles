@@ -47,43 +47,45 @@ function go {
 source $HOME/.dotfiles/helpers/git-completion.sh
 
 # Some color definitions
-GREEN=$(tput setaf 2)
-RED=$(tput setaf 1)
-YELLOW=$(tput bold; tput setaf 3;)
-RST=$(tput sgr0)
+RED='\033[0;31m'
+YELLOW='\033[1;32m'
+GREEN='\033[1;32m'
 
-#GOOD=$(echo -e '\xE2\x9C\x93')
-GOOD=$(echo +)
-BAD=$(echo -)
+RST='\033[0m'
+
+#SUCCESS="$GREEN$(echo -e '\xE2\x9C\x93')$RST"
+SUCCESS="+"
+FAIL="-"
+
+GITPS1="\$(__git_ps1 \" $YELLOW%s$RST\")"
+
+function gitbranch {
+        echo -e "${YELLOW}$(__git_ps1)${RST}"
+}
 
 function exit_status {
-  if [ "$?" -eq "0" ]; then
-    echo $GOOD
-  else
-    echo $BAD
-  fi
+        EXITSTATUS="$?"
+
+        if [ "${EXITSTATUS}" -eq "0" ]; then
+                echo -e $SUCCESS
+        else
+                echo -e $FAIL
+        fi
 }
 
-function setup_prompt {
-  local __user_host="[\u@\h]"
-  local __path="\W"
-  local __git="\[$YELLOW\]$(__git_ps1)\[$RST\]"
-  local __exit_status="\$(exit_status)"
+function ps1smarts {
+        STAT=$(exit_status)
+        GIT=$(gitbranch) #Not available on dreamhost :-/
+        DIR=$($HOME/.dotfiles/bin/shortdir)
 
-  if [[ "$TERM" == "screen" ]]; then
-    export PS1="$__path$__git $__exit_status "
-  else 
-    export PS1="$__user_host $__path$__git $__exit_status "
-  fi
+        echo -e "$DIR$GIT $STAT "
 }
-# Setup PS1 variable
-#setup_prompt
 
 # For when I inevitable break my PS1...
 if [[ -n "$TMUX_PANE" ]]; then
-  export PS1="\$($HOME/.dotfiles/bin/shortdir)\[$YELLOW\]\$(__git_ps1)\[$RST\] \$(exit_status) "
+  export PS1="\$(ps1smarts)"
 else 
-  export PS1="[\u@\h \$($HOME/.dotfiles/bin/shortdir)]\[$YELLOW\]\$(__git_ps1)\[$RST\] \$(exit_status) "
+  export PS1="[\u@\h] \$(ps1smarts)"
 fi
 
 # Load RVM up
